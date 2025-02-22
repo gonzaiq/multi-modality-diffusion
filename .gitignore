@@ -24,3 +24,5 @@ TestResults.xml
 .venv
 # outputs from slurm
 outputs
+# PyCache
+../../*.pyc
