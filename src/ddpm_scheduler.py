@@ -31,7 +31,7 @@ class CustomDDPMScheduler(DDPMScheduler):
         
         return sample
 
-class ConditionalCustomDDPMScheduler(DDPMScheduler):
+class ConditionalDDPMScheduler(DDPMScheduler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -47,12 +47,21 @@ class ConditionalCustomDDPMScheduler(DDPMScheduler):
         """Custom sampling function."""
 
         # sample correlated noise
-        sample = generate_channel_correlated_noise((batch_size, *shape), correlation=noise_corr).to(model.device)
+        x_t = generate_channel_correlated_noise((batch_size, *shape), correlation=noise_corr).to(model.device).half()
         
+        # simulate no conditioning with zero embedding
+        seq_len = 320  # Depends on the model
+        hidden_dim = 768  # Depends on the model  
+        encoder_hidden_states = torch.zeros((batch_size, seq_len, hidden_dim), device=x_t.device).half()
+
+        # Set model to eval mode
+        model.eval()
+
         self.set_timesteps(num_inference_steps)
-        for t in self.timesteps:
-            with torch.no_grad():
-                model_output = model(sample, t).sample
-            sample = self.step(model_output, t, sample).prev_sample
+        with torch.no_grad():
+            for t in self.timesteps:
+                print(f"time {t}, {x_t.shape}")
+                noise_pred = model(x_t, t, encoder_hidden_states=encoder_hidden_states).sample
+                x_t = self.step(noise_pred, t, x_t).prev_sample
         
-        return sample
+        return x_t.clamp(-1, 1)  # Ensure valid pixel range

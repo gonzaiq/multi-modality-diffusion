@@ -4,7 +4,7 @@ from diffusers import UNet2DConditionModel, StableDiffusionPipeline
 from datasets import load_dataset
 from torchvision import transforms
 from typing import Optional
-from src.ddpm_scheduler import ConditionalCustomDDPMScheduler
+from src.ddpm_scheduler import ConditionalDDPMScheduler
 from src.correlated_noise import generate_channel_correlated_noise
 from src.datasets import CityscapesDataset
 import os
@@ -61,7 +61,7 @@ def main():
 
 
     # Load SD pipeline
-    pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1", torch_dtype=torch.float16)
+    pipe = StableDiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", torch_dtype=torch.float16)
 
     # Extract UNet model
     model = pipe.unet
@@ -71,7 +71,7 @@ def main():
     model = model.half()
 
     # Define DDPM scheduler
-    scheduler = ConditionalCustomDDPMScheduler(num_train_timesteps=1000)
+    scheduler = ConditionalDDPMScheduler(num_train_timesteps=1000)
 
     # Run Training
     print(f"Training...")
