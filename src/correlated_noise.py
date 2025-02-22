@@ -1,6 +1,6 @@
 import torch
 
-def generate_channel_correlated_noise(shape, correlation=0.5):
+def generate_channel_correlated_noise(shape, correlation=0.0):
     """
     Generates noise with correlation across the channel dimension.
     
@@ -19,15 +19,13 @@ def generate_channel_correlated_noise(shape, correlation=0.5):
     cov_matrix.fill_diagonal_(1.0)  # Set diagonal to 1 (variance of each channel)
 
     # Compute Cholesky decomposition (L such that L @ L.T = cov_matrix)
-    L = torch.linalg.cholesky(cov_matrix)  # Lower triangular matrix
+    L = torch.linalg.cholesky(cov_matrix) # Lower triangular matrix
 
     # Sample uncorrelated Gaussian noise for all channels
     noise = torch.randn(B, C, H, W, device=device)  # Independent noise
+    noise = noise.view(B, C, -1)  # Reshape to (B, C, H*W)
 
-    # Apply Cholesky transformation to introduce correlation
-    correlated_noise = torch.einsum("ij,bcij->bcij", L, noise)  # Matrix multiplication per batch
+    correlated_noise = torch.matmul(L, noise) # Shape: (B, C, H*W)
+    correlated_noise = correlated_noise.view(B, C, H, W)  # Reshape back to (B, C, H, W)
     
     return correlated_noise
-
-# Usage in training loop
-noise = generate_channel_correlated_noise(images.shape, correlation=0.7).to(model.device)

@@ -25,4 +25,4 @@ TestResults.xml
 # outputs from slurm
 outputs
 # PyCache
-../../*.pyc
+**/*.pyc
