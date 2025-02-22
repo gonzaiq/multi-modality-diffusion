@@ -3,3 +3,4 @@ diffusers==0.32.2
 matplotlib==3.10.0
 pip==24.0
 torchvision==0.21.0
+transformers==4.49.0
