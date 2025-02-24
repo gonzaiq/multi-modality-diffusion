@@ -21,15 +21,21 @@ class CustomDDPMScheduler(DDPMScheduler):
         """Custom sampling function."""
         device = model.device
         #sample = torch.randn((batch_size, *shape), device=device)
-        sample = generate_channel_correlated_noise(sample.shape, correlation=noise_corr).to(model.device)
+        x_t = generate_channel_correlated_noise((batch_size, *shape), correlation=noise_corr).to(model.device)
+    
+        # simulate no conditioning with zero embedding
+        seq_len = 64  # Depends on the model
+        hidden_dim = 32  # Depends on the model  
+        encoder_hidden_states = torch.zeros((batch_size, seq_len, hidden_dim), device=x_t.device)
         
         self.set_timesteps(num_inference_steps)
         for t in self.timesteps:
+            print(t)
             with torch.no_grad():
-                model_output = model(sample, t).sample
-            sample = self.step(model_output, t, sample).prev_sample
+                model_output = model(x_t, t, encoder_hidden_states=encoder_hidden_states).sample
+            x_t = self.step(model_output, t, x_t).prev_sample
         
-        return sample
+        return x_t
 
 class ConditionalDDPMScheduler(DDPMScheduler):
     def __init__(self, *args, **kwargs):
@@ -50,8 +56,8 @@ class ConditionalDDPMScheduler(DDPMScheduler):
         x_t = generate_channel_correlated_noise((batch_size, *shape), correlation=noise_corr).to(model.device).half()
         
         # simulate no conditioning with zero embedding
-        seq_len = 320  # Depends on the model
-        hidden_dim = 768  # Depends on the model  
+        seq_len = 64  # Depends on the model
+        hidden_dim = 32  # Depends on the model  
         encoder_hidden_states = torch.zeros((batch_size, seq_len, hidden_dim), device=x_t.device).half()
 
         # Set model to eval mode

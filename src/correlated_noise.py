@@ -1,6 +1,6 @@
 import torch
 
-def generate_channel_correlated_noise(shape, correlation=0.0):
+def generate_channel_correlated_noise(shape, correlation=0.0, generator=None, device=None, dtype=None, layout=torch.strided,):
     """
     Generates noise with correlation across the channel dimension.
     
@@ -11,7 +11,18 @@ def generate_channel_correlated_noise(shape, correlation=0.0):
     Returns:
         torch.Tensor: Correlated noise tensor.
     """
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------v")
+    print(f"go correlation: {correlation}")
     B, C, H, W = shape  # Batch, Channels, Height, Width
+    print(B, C, H, W)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Define a covariance matrix for the channels
@@ -22,7 +33,7 @@ def generate_channel_correlated_noise(shape, correlation=0.0):
     L = torch.linalg.cholesky(cov_matrix) # Lower triangular matrix
 
     # Sample uncorrelated Gaussian noise for all channels
-    noise = torch.randn(B, C, H, W, device=device)  # Independent noise
+    noise = torch.randn(B, C, H, W, generator=generator, device=device, dtype=dtype, layout=layout)  # Independent noise
     noise = noise.view(B, C, -1)  # Reshape to (B, C, H*W)
 
     correlated_noise = torch.matmul(L, noise) # Shape: (B, C, H*W)
