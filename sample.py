@@ -27,7 +27,9 @@ def main():
     ])
 
     # Load SD pipeline and model
-    pipe = StableDiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", torch_dtype=torch.float16)
+    #pipe = StableDiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", torch_dtype=torch.float16)
+    pipe = StableDiffusionPipeline.from_pretrained("hf-internal-testing/tiny-stable-diffusion-torch")
+
     model = pipe.unet
 
     # Modify the U-Net model
@@ -40,7 +42,7 @@ def main():
     scheduler = ConditionalDDPMScheduler(num_train_timesteps=1000)
 
     # SAMPLE
-    image = scheduler.sample(model, shape=(4, 32, 32), num_inference_steps=5)
+    image = scheduler.sample(model, shape=(4, 128, 128), num_inference_steps=10)
 
     # Convert tensor to image
     image = image[0].permute(1, 2, 0)
