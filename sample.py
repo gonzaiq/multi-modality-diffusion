@@ -5,8 +5,10 @@ import os
 from diffusers import StableDiffusionPipeline
 from src.ddpm_scheduler import ConditionalDDPMScheduler, CustomDDPMScheduler
 from diffusers import DDPMScheduler, UNet2DConditionModel
-from src.pipeline import CustomStableDiffusionPipeline
+from src.pipelines.stable_diffusion_pipeline import CustomStableDiffusionPipeline
+from src.pipelines.ddpm_pipeline import CustomDDPMPipeline
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Main function
 def main():
@@ -27,29 +29,44 @@ def main():
         transforms.ToTensor(),
     ])
 
+    pipeline = "ddpm"
+
     # Load SD pipeline and model
-    pipe = CustomStableDiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5")
-    #pipe = StableDiffusionPipeline.from_pretrained("hf-internal-testing/tiny-stable-diffusion-torch")
-    print(pipe)
-
-    model = pipe.unet
-
-    # Modify the U-Net model
-    #model.config.in_channels = 6  # RGB + Segmentation
-    #model.register_to_config(in_channels=6)
-    #model.conv_in = torch.nn.Conv2d(in_channels=6, out_channels=320, kernel_size=3, stride=1, padding=1)
-    #model = model.half()
-
+    if pipeline == "sd":
+        pipe = CustomStableDiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5")
+        pipe_args = {"prompt": prompt}
+    elif pipeline == "ddpm":
+        pipe = CustomDDPMPipeline.from_pretrained("google/ddpm-cat-256")
+        pipe.scheduler = DDPMScheduler.from_pretrained("google/ddpm-cat-256", prediction_type='epsilon')
+        pipe_args = {}
+    else:
+        raise NotImplementedError(f"Pipeline {pipeline} is not implemented")
+    
     # Define DDPM scheduler
     scheduler = CustomDDPMScheduler(num_train_timesteps=1000)
-    pipe.scheduler = scheduler
+    #pipe.scheduler = scheduler
+
+    # Set a fixed seed for reproducibility
+    seed = 42  # Choose any integer
+    generator = torch.Generator("cpu").manual_seed(seed)
+
     # Generate an image from a text prompt
     prompt = "A futuristic cityscape at sunset, highly detailed, cinematic lighting"
-    image = pipe(prompt, noise_corr=0.0).images[0]
+    correlations = np.arange(0.0, 1.0, 0.1)
+    for corr in correlations:
 
-    # Save or display the image
-    image.save("output.png")
-    image.show()
+        pipe_args.update(
+            {
+            "generator": generator,
+            "num_inference_steps": 50,
+            "noise_corr": corr
+            })
+
+        image = pipe(**pipe_args).images[0]
+
+        # Save or display the image
+        image.save(f"output_{pipeline}_corr_{corr}.png")
+        plt.close()
 
     # SAMPLE
     """

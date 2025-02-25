@@ -20,7 +20,7 @@ def generate_channel_correlated_noise(shape, correlation=0.0, generator=None, de
     print("-----------------------")
     print("-----------------------")
     print("-----------------------v")
-    print(f"go correlation: {correlation}")
+    print(f"go correlation: {correlation}, generator={generator}")
     B, C, H, W = shape  # Batch, Channels, Height, Width
     print(B, C, H, W)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -33,6 +33,10 @@ def generate_channel_correlated_noise(shape, correlation=0.0, generator=None, de
     L = torch.linalg.cholesky(cov_matrix) # Lower triangular matrix
 
     # Sample uncorrelated Gaussian noise for all channels
+    print("-------")
+    print("-------")
+    print("-------")
+    print(B, C, H, W)
     noise = torch.randn(B, C, H, W, generator=generator, device=device, dtype=dtype, layout=layout)  # Independent noise
     noise = noise.view(B, C, -1)  # Reshape to (B, C, H*W)
 

@@ -3,10 +3,11 @@ from typing import List, Union, Optional, Dict, Callable, Any, Tuple
 import torch
 from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.callbacks import MultiPipelineCallbacks, PipelineCallback
-from diffusers.utils import deprecate, is_torch_xla_available
+from diffusers.utils import deprecate, is_torch_xla_available, logging, replace_example_docstring
 from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion import retrieve_timesteps, rescale_noise_cfg
 from diffusers.pipelines.stable_diffusion.pipeline_output import StableDiffusionPipelineOutput
 from src.correlated_noise import generate_channel_correlated_noise
+from src.pipelines.random_tensor import randn_tensor
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -15,53 +16,9 @@ if is_torch_xla_available():
 else:
     XLA_AVAILABLE = False
 
-def randn_tensor(
-    shape: Union[Tuple, List],
-    generator: Optional[Union[List["torch.Generator"], "torch.Generator"]] = None,
-    device: Optional["torch.device"] = None,
-    dtype: Optional["torch.dtype"] = None,
-    layout: Optional["torch.layout"] = None,
-    noise_corr: float = 0.0
-):
-    """A helper function to create random tensors on the desired `device` with the desired `dtype`. When
-    passing a list of generators, you can seed each batch size individually. If CPU generators are passed, the tensor
-    is always created on the CPU.
-    """
-    # device on which tensor is created defaults to device
-    rand_device = device
-    batch_size = shape[0]
-
-    layout = layout or torch.strided
-    device = device or torch.device("cpu")
-
-    if generator is not None:
-        gen_device_type = generator.device.type if not isinstance(generator, list) else generator[0].device.type
-        if gen_device_type != device.type and gen_device_type == "cpu":
-            rand_device = "cpu"
-        elif gen_device_type != device.type and gen_device_type == "cuda":
-            raise ValueError(f"Cannot generate a {device} tensor from a generator of type {gen_device_type}.")
-
-    # make sure generator list of length 1 is treated like a non-list
-    if isinstance(generator, list) and len(generator) == 1:
-        generator = generator[0]
-
-    if isinstance(generator, list):
-        shape = (1,) + shape[1:]
-        latents = [
-            #torch.randn(shape, generator=generator[i], device=rand_device, dtype=dtype, layout=layout)
-            generate_channel_correlated_noise(shape, correlation=noise_corr, generator=generator[i], device=rand_device, dtype=dtype, layout=layout)
-            for i in range(batch_size)
-        ]
-        latents = torch.cat(latents, dim=0).to(device)
-    else:
-        #latents = torch.randn(shape, generator=generator, device=rand_device, dtype=dtype, layout=layout).to(device)
-        latents = generate_channel_correlated_noise(shape, correlation=noise_corr, generator=generator, device=rand_device, dtype=dtype, layout=layout)
-        
-    return latents
-
-
 class CustomStableDiffusionPipeline(StableDiffusionPipeline):
 
+    @torch.no_grad()
     def __call__(
         self,
         prompt: Union[str, List[str]] = None,

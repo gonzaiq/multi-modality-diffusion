@@ -7,7 +7,7 @@ from typing import Optional
 from src.ddpm_scheduler import ConditionalDDPMScheduler
 from src.correlated_noise import generate_channel_correlated_noise
 from src.datasets import CityscapesDataset
-from src.pipeline import CustomStableDiffusionPipeline
+from pipelines.stable_diffusion_pipeline import CustomStableDiffusionPipeline
 import os
 
 # Training Loop
