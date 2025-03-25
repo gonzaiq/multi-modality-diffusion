@@ -10,24 +10,8 @@ from src.pipelines.ddpm_pipeline import CustomDDPMPipeline
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Main function
+
 def main():
-    # Data directories (Replace these with actual paths)
-    data_pth = "data/Cityscapes"
-    img_dir = os.path.join(data_pth, "leftImg8bit_trainvaltest", "leftImg8bit")
-    mask_dir = os.path.join(data_pth, "gtFine_trainvaltest", "gtFine")
-
-    # Define transforms
-    transform_image = transforms.Compose([
-        transforms.Resize((256, 256)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-    transform_mask = transforms.Compose([
-        transforms.Resize((256, 256)),
-        transforms.ToTensor(),
-    ])
 
     pipeline = "ddpm"
 

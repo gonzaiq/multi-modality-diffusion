@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=mm-diffusion           # Job name
+#SBATCH --job-name=diffusion           # Job name
 #SBATCH --output=outputs/output_%j.txt      # Output file (%j will be replaced with the job ID)
 #SBATCH --error=outputs/error_%j.txt        # Error file (%j will be replaced with the job ID)
 #SBATCH --partition=gpu           # Partition to submit the job

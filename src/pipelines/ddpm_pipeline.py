@@ -6,6 +6,7 @@ from diffusers.pipelines.pipeline_utils import DiffusionPipeline, ImagePipelineO
 from diffusers.configuration_utils import FrozenDict
 from diffusers import DDPMScheduler
 from src.pipelines.random_tensor import randn_tensor
+import pytorch_lightning as pl
 
 class CustomDDPMPipeline(DDPMPipeline):
 
